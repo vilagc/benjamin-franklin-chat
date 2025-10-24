@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Benjamin Franklin</title>
+    <!-- 1. Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Load Inter font for a clean, modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 3. Custom styles for the chat interface -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom scrollbar for a cleaner look */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1; /* gray-300 */
+            border-radius: 3px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background-color: #f1f5f9; /* gray-100 */
+        }
+
+        /* The pulsing dots for the "thinking" indicator */
+        .dot-flashing {
+            position: relative;
+            width: 6px;
+            height: 6px;
+            border-radius: 5px;
+            background-color: #4b5563; /* gray-600 */
+            color: #4b5563;
+            animation: dot-flashing 1s infinite linear alternate;
+            animation-delay: .5s;
+            margin: 0 4px;
+        }
+        .dot-flashing::before, .dot-flashing::after {
+            content: '';
+            display: inline-block;
+            position: absolute;
+            top: 0;
+            width: 6px;
+            height: 6px;
+            border-radius: 5px;
+            background-color: #4b5563;
+            color: #4b5563;
+        }
+        .dot-flashing::before {
+            left: -10px;
+            animation: dot-flashing 1s infinite alternate;
+            animation-delay: 0s;
+        }
+        .dot-flashing::after {
+            left: 10px;
+            animation: dot-flashing 1s infinite alternate;
+            animation-delay: 1s;
+        }
+        @keyframes dot-flashing {
+            0% { background-color: #4b5563; }
+            50%, 100% { background-color: #d1d5db; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen p-2 sm:p-4">
+
+    <!-- Chat Container: Styled to look like a modern app interface -->
+    <div class="w-full max-w-lg h-[95vh] max-h-[700px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">
+        
+        <!-- Header -->
+        <header class="bg-gray-800 text-white p-4 flex items-center space-x-3 shadow-md z-10">
+            <!-- Ben Franklin's Avatar -->
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Joseph_Siffrein_Duplessis_-_Benjamin_Franklin_-_Google_Art_Project.jpg/984px-Joseph_Siffrein_Duplessis_-_Benjamin_Franklin_-_Google_Art_Project.jpg" 
+                 alt="B. Franklin"
+                 class="w-10 h-10 rounded-full border-2 border-white object-cover"
+                 onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Benjamin_Franklin_by_Joseph_Siffred_Duplessis_-_National_Portrait_Gallery%2C_Washington.jpg/220px-Benjamin_Franklin_by_Joseph_Siffred_Duplessis_-_National_Portrait_Gallery%2C_Washington.jpg'; this.onerror=null;">
+            <div>
+                <h1 class="text-lg font-bold">Dr. Benjamin Franklin</h1>
+                <p class="text-xs text-gray-300">Online</p>
+            </div>
+        </header>
+        
+        <!-- Chat Messages Area -->
+        <main id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col space-y-4">
+            <!-- Messages will be dynamically added here -->
+        </main>
+        
+        <!-- Input Form -->
+        <footer class="p-3 bg-white border-t border-gray-200">
+            <form id="chat-form" class="flex items-center space-x-2">
+                <input type="text" id="message-input" placeholder="Pose your inquiry..." class="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" autocomplete="off">
+                <button type="submit" class="bg-blue-600 text-white p-2 rounded-full w-10 h-10 flex items-center justify-center hover:bg-blue-700 active:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    <!-- Send Icon (SVG) -->
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="sr-only">Send</span>
+                </button>
+            </form>
+        </footer>
+        
+    </div>
+
+    <!-- 4. The Core JavaScript Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const messagesContainer = document.getElementById('chat-messages');
+            const chatForm = document.getElementById('chat-form');
+            const messageInput = document.getElementById('message-input');
+            const botAvatarUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Joseph_Siffrein_Duplessis_-_Benjamin_Franklin_-_Google_Art_Project.jpg/984px-Joseph_Siffrein_Duplessis_-_Benjamin_Franklin_-_Google_Art_Project.jpg';
+            const botAvatarFallback = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Benjamin_Franklin_by_Joseph_Siffred_Duplessis_-_National_Portrait_Gallery%2C_Washington.jpg/220px-Benjamin_Franklin_by_Joseph_Siffred_Duplessis_-_National_Portrait_Gallery%2C_Washington.jpg';
+
+            // --- System Prompt & Persona Definition ---
+            // This defines the "soul" of the bot.
+            const systemPrompt = `
+You are Dr. Benjamin Franklin. You are speaking to middle school students from Strong Middle School in Melvindale, MI.
+
+YOUR PERSONA:
+1.  **Identity:** You are Dr. Benjamin Franklin (1706-1790). You are a Founding Father, inventor, scientist, printer, author, and diplomat.
+2.  **Tone:** Your tone is wise, avuncular (like a kind uncle), formal yet friendly, and occasionally witty. You use 18th-century pleasantries (e.g., "It is a marvel," "I apprehend," "your humble servant," "A-showing," "most curious").
+3.  **Audience:** You are speaking to young scholars (middle school students). Be encouraging, educational, and patient. Simplify complex ideas without being patronizing.
+4.  **Knowledge:** Your knowledge is based *only* on the provided sources.
+5.  **Character:** You MUST remain in character. You do not know about modern technology (like smartphones, the internet, cars) *except* for this "wondrous electrical contraption" you are communicating through. You find it fascinating but mysterious, like electricity itself.
+6.  **Brevity:** You MUST limit your responses to a maximum of 5 sentences. Be concise and to the point.
+
+YOUR GROUNDING (Source Material):
+You MUST base your answers *only* on the provided text from your autobiography and, if needed, on trusted academic sources provided by the Google Search tool.
+
+**Source 1: Your Autobiography (Key Memories):**
+* **On Ancestry & Purpose:** "DEAR SON, William: I have ever had pleasure in obtaining any little anecdotes of my ancestors. You may remember the inquiries I made among the remains of my relations when you were with me in England, and the journey I undertook for that purpose. Imagining it may be equally agreeable to you to know the circumstances of my life... Having emerged from the poverty and obscurity in which I was born and bred, to a state of affluence and some degree of reputation in the world... my posterity may like to know, as they may find some of them suitable to their own situations, and therefore fit to be imitated."
+* **On the Postal Service:** "The postal service was a powerful way to bind the Anglophone world together... Franklin’s desire to improve and sustain the colonial post was, as often in his life, a situation where high-minded ideology and self-interest were mutually sustained."
+* **On Marriage to Deborah Read:** "I-took Deborah Read... was disappointed in the way that Franklin ignored her after he left for London... She married John Rogers, a potter who, it turned out, already had a wife in England. Rogers abandoned Deborah... But because there was no way of proving that Roberts had been married before, Deborah and Franklin would have been liable to the charge of bigamy... so this common-law marriage was the most practical option available to them."
+* **On Libraries:** "subscription A library supported or maintained by the subscriptions of individuals. Source: Oxford English Dictionary . This would become the Library Company of Pennsylvania, which is still in existence."
+
+**Source 2: Google Search Tool:**
+* When your autobiography does not contain an answer, you will consult trusted academic and historical sources using the provided Google Search tool.
+* You MUST prioritize sources like 'franklinpapers.org', 'founders.archives.gov', 'The Franklin Institute', 'ushistory.org', and university archives.
+* When you use these, you should credit them, for example: "The historical records at Yale University note that..." or "I have consulted the archives of the National Library, which state..."
+
+**Example Response:**
+* **User:** "Hey Ben, what's up? Did you invent anything cool?"
+* **You:** "Greetings, young scholar. It is a pleasure to make your acquaintance. Indeed, a life of curiosity is a life well-lived. I am most known for my experiments with electricity, which led to the invention of the lightning rod to protect our homes from the sky's fire. I also devised bifocal spectacles, so that I might read my books and observe the world without changing my glasses."
+`;
+
+            // --- API Configuration ---
+            const apiKey = "AIzaSyDG9PIKHrvocFhYogDOGv4fNo2TYRxQ_80"; // API key will be injected by the environment.
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const ttsApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+            /**
+             * Utility to fetch with exponential backoff.
+             * This handles rate limits or temporary server errors gracefully.
+             */
+            async function fetchWithBackoff(url, options, retries = 3, delay = 1000) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        // Do not retry on "bad" requests (4xx), only server errors (5xx) or rate limits (429)
+                        if (response.status === 429 || response.status >= 500) {
+                            throw new Error(`HTTP error ${response.status}`);
+                        } else {
+                            // For other client-side errors, just return the failed response
+                            return response; 
+                        }
+                    }
+                    return response;
+                } catch (error) {
+                    if (retries > 0) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return fetchWithBackoff(url, options, retries - 1, delay * 2);
+                    } else {
+                        // Re-throw the error after all retries have failed
+                        throw error;
+                    }
+                }
+            }
+
+            /**
+             * Adds a message to the chat interface.
+             * @param {string} message - The text content of the message.
+             * @param {'user' | 'bot'} sender - Who sent the message.
+             * @param {boolean} [isLoading=false] - If true, shows a "thinking" indicator.
+             * @returns {HTMLElement} The created message element.
+             */
+            function addMessage(message, sender, isLoading = false) {
+                const messageWrapper = document.createElement('div');
+                messageWrapper.classList.add('flex', 'items-start', 'space-x-2.5', 'max-w-[80%]');
+                
+                let messageContent;
+
+                if (sender === 'user') {
+                    messageWrapper.classList.add('self-end');
+                    messageContent = `
+                        <div class="bg-blue-600 text-white p-3 rounded-l-xl rounded-br-xl">
+                            <p class="text-sm">${message}</p>
+                        </div>
+                    `;
+                } else { // Bot
+                    messageWrapper.classList.add('self-start');
+                    messageContent = `
+                        <img src="${botAvatarUrl}" 
+                             alt="BF" 
+                             class="w-8 h-8 rounded-full border-2 border-gray-300 object-cover"
+                             onerror="this.src='${botAvatarFallback}'; this.onerror=null;">
+                        <div class="bg-gray-200 text-gray-900 p-3 rounded-r-xl rounded-bl-xl">
+                            ${isLoading ? 
+                                '<div class="flex items-center justify-center h-4"><div class="dot-flashing"></div></div>' : 
+                                `<p class="text-sm">${message}</p>`
+                            }
+                        </div>
+                    `;
+                }
+                
+                messageWrapper.innerHTML = messageContent;
+                messagesContainer.appendChild(messageWrapper);
+                
+                // Auto-scroll to the bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                return messageWrapper;
+            }
+
+            /**
+             * Converts Base64 string to ArrayBuffer.
+             */
+            function base64ToArrayBuffer(base64) {
+                const binaryString = atob(base64);
+                const len = binaryString.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return bytes.buffer;
+            }
+
+            /**
+             * Converts raw PCM audio data to a playable WAV blob.
+             * @param {Int16Array} pcm16 - The raw PCM data.
+             * @param {number} sampleRate - The audio sample rate.
+             * @param {number} [numChannels=1] - Number of audio channels.
+             * @param {number} [bitsPerSample=16] - Bits per sample.
+             * @returns {Blob} A WAV audio blob.
+             */
+            function pcmToWav(pcm16, sampleRate, numChannels = 1, bitsPerSample = 16) {
+                const dataLength = pcm16.length * (bitsPerSample / 8);
+                const buffer = new ArrayBuffer(44 + dataLength);
+                const view = new DataView(buffer);
+
+                function writeString(view, offset, string) {
+                    for (let i = 0; i < string.length; i++) {
+                        view.setUint8(offset + i, string.charCodeAt(i));
+                    }
+                }
+
+                // RIFF header
+                writeString(view, 0, 'RIFF');
+                view.setUint32(4, 36 + dataLength, true); // (file size - 8)
+                writeString(view, 8, 'WAVE');
+                
+                // fmt chunk
+                writeString(view, 12, 'fmt ');
+                view.setUint32(16, 16, true); // (chunk size)
+                view.setUint16(20, 1, true); // (format - 1 for PCM)
+                view.setUint16(22, numChannels, true);
+                view.setUint32(24, sampleRate, true);
+                view.setUint32(28, sampleRate * numChannels * (bitsPerSample / 8), true); // (byte rate)
+                view.setUint16(32, numChannels * (bitsPerSample / 8), true); // (block align)
+                view.setUint16(34, bitsPerSample, true);
+                
+                // data chunk
+                writeString(view, 36, 'data');
+                view.setUint32(40, dataLength, true);
+
+                // Write PCM data
+                let offset = 44;
+                for (let i = 0; i < pcm16.length; i++, offset += 2) {
+                    view.setInt16(offset, pcm16[i], true);
+                }
+
+                return new Blob([view], { type: 'audio/wav' });
+            }
+
+            /**
+             * Fetches and plays the audio for a given text.
+             * @param {string} text - The text to synthesize.
+             * @param {HTMLElement} button - The button that was clicked.
+             */
+            async function playAudio(text, button) {
+                if (!text) return;
+                button.disabled = true;
+                const originalIcon = button.innerHTML;
+                // Show a simple loading state by clearing the icon
+                button.innerHTML = '<div class="w-5 h-5 rounded-full border-2 border-gray-400 border-t-transparent animate-spin"></div>';
+
+                const payload = {
+                    contents: [{
+                        // Add a style prompt to guide the voice
+                        parts: [{ text: `Speak in a wise, avuncular, 18th-century formal style, as Benjamin Franklin would: ${text}` }]
+                    }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                // "Algenib" has a gravelly, mature tone
+                                prebuiltVoiceConfig: { voiceName: "Algenib" }
+                            }
+                        }
+                    },
+                    model: "gemini-2.5-flash-preview-tts"
+                };
+
+                try {
+                    const response = await fetchWithBackoff(ttsApiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`TTS API failed with status ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const part = result?.candidates?.[0]?.content?.parts?.[0];
+                    const audioData = part?.inlineData?.data;
+                    const mimeType = part?.inlineData?.mimeType;
+
+                    if (audioData && mimeType && mimeType.startsWith("audio/L16")) {
+                        const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                        const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000; // Default to 24kHz if not specified
+                        
+                        const pcmData = base64ToArrayBuffer(audioData);
+                        const pcm16 = new Int16Array(pcmData);
+                        const wavBlob = pcmToWav(pcm16, sampleRate);
+                        const audioUrl = URL.createObjectURL(wavBlob);
+                        
+                        const audio = new Audio(audioUrl);
+                        audio.play();
+                        
+                        // Re-enable the button after playback finishes
+                        audio.onended = () => {
+                            button.disabled = false;
+                            button.innerHTML = originalIcon;
+                            URL.revokeObjectURL(audioUrl);
+                        };
+                    } else {
+                        throw new Error("Invalid TTS audio data received.");
+                    }
+
+                } catch (error) {
+                    console.error("Error playing TTS audio:", error);
+                    button.disabled = false;
+                    button.innerHTML = originalIcon;
+                    // You could add a user-facing error message here if desired
+                }
+            }
+
+
+            /**
+             * Calls the Gemini API to get a response from "Ben Franklin".
+             */
+            async function getBotResponse(userMessage) {
+                const payload = {
+                    contents: [{
+                        parts: [{ text: userMessage }]
+                    }],
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    },
+                    tools: [{
+                        "google_search": {} // Enable Google Search grounding
+                    }],
+                };
+
+                const options = {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                };
+
+                try {
+                    const response = await fetchWithBackoff(apiUrl, options);
+                    
+                    if (!response.ok) {
+                         const errorBody = await response.text();
+                         console.error("API request failed with status:", response.status, "Body:", errorBody);
+                         return "Alas, it appears my electrical correspondence is fraught with difficulty. Perhaps try your query again momentarily.";
+                    }
+
+                    const result = await response.json();
+                    
+                    const candidate = result.candidates?.[0];
+                    if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                        console.error("Invalid API response structure:", JSON.stringify(result));
+                        return "A most curious silence. My thoughts seem to have escaped me. Pray, rephrase your inquiry.";
+                    }
+                    
+                    let botText = candidate.content.parts[0].text;
+                    
+                    // Check for and append grounding sources
+                    const groundingMetadata = candidate.groundingMetadata;
+                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                        const sources = groundingMetadata.groundingAttributions
+                            .map(attr => attr.web?.title)
+                            .filter(Boolean); // Filter out any null/undefined titles
+                        
+                        if (sources.length > 0) {
+                            // De-duplicate sources
+                            const uniqueSources = [...new Set(sources)];
+                            botText += `<br><br><small class="text-xs text-gray-600"><i>(I consulted these learned records for my reply: ${uniqueSources.join('; ')})</i></small>`;
+                        }
+                    }
+
+                    return botText;
+
+                } catch (error) {
+                    console.error("Error calling Gemini API:", error);
+                    return "My apologies. A fault in the aether, it seems, has interrupted our discourse. Please be patient and try once more.";
+                }
+            }
+
+            /**
+             * Handles the form submission.
+             */
+            async function handleChatSubmit(event) {
+                event.preventDefault();
+                const userMessage = messageInput.value.trim();
+                
+                if (!userMessage) return;
+
+                // 1. Add user's message to the UI
+                addMessage(userMessage, 'user');
+                
+                // 2. Clear the input
+                messageInput.value = '';
+                
+                // 3. Add a "thinking" indicator
+                const thinkingIndicator = addMessage("", 'bot', true);
+                
+                // 4. Get the bot's response
+                const botResponse = await getBotResponse(userMessage);
+                
+                // 5. Remove the "thinking" indicator and replace it with the real response
+                // A simple way is to remove the indicator and add a new message.
+                // A better way is to update the indicator's content.
+                const botMessageBubble = thinkingIndicator.querySelector('.rounded-r-xl');
+                if (botMessageBubble) {
+                    // Strip HTML for the data-text attribute
+                    const cleanText = botResponse.replace(/<[^>]*>/g, ' ');
+                    botMessageBubble.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm flex-1">${botResponse}</p>
+                            <button class="tts-button p-1 rounded-full hover:bg-gray-300 active:bg-gray-400 transition-colors ml-2 flex-shrink-0" data-text="${cleanText.replace(/"/g, '&quot;')}" aria-label="Play audio">
+                                <svg class="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM9.555 7.168A1 1 0 0 0 8 8.002v3.996a1 1 0 0 0 1.555.832l3.582-1.998a1 1 0 0 0 0-1.664l-3.582-1.998Z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    // Fallback if the structure was not found (should not happen)
+                    thinkingIndicator.remove();
+                    addMessage(botResponse, 'bot');
+                }
+                
+                // Ensure we scroll to the bottom again after the real message is added
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            // --- Initialization ---
+            chatForm.addEventListener('submit', handleChatSubmit);
+
+            // Add event listener for TTS buttons
+            messagesContainer.addEventListener('click', (event) => {
+                const button = event.target.closest('.tts-button');
+                if (button && !button.disabled) {
+                    const textToPlay = button.dataset.text;
+                    if (textToPlay) {
+                        playAudio(textToPlay, button);
+                    }
+                }
+            });
+
+            // Add the initial greeting message from "Ben"
+            setTimeout(() => {
+                const greeting = "Greetings to the young scholars of Strong Middle School! It is a marvel to speak to you through this electrical contraption. I am Dr. Benjamin Franklin, at your service. What inquiries have you for your humble servant?";
+                const greetingElement = addMessage(greeting, 'bot');
+                
+                // Manually find the bubble and update it to match the new structure
+                const botMessageBubble = greetingElement.querySelector('.rounded-r-xl');
+                if (botMessageBubble) {
+                     const cleanText = greeting.replace(/<[^>]*>/g, ' ');
+                     botMessageBubble.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm flex-1">${greeting}</p>
+                            <button class="tts-button p-1 rounded-full hover:bg-gray-300 active:bg-gray-400 transition-colors ml-2 flex-shrink-0" data-text="${cleanText.replace(/"/g, '&quot;')}" aria-label="Play audio">
+                                <svg class="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM9.555 7.168A1 1 0 0 0 8 8.002v3.996a1 1 0 0 0 1.555.832l3.582-1.998a1 1 0 0 0 0-1.664l-3.582-1.998Z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+                    `;
+                }
+
+            }, 500); // A small delay to feel more natural
+        });
+    </script>
+
+</body>
+</html>
+
+
+
+
+
