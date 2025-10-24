@@ -115,7 +115,8 @@
             const messagesContainer = document.getElementById('chat-messages');
             const chatForm = document.getElementById('chat-form');
             const messageInput = document.getElementById('message-input');
-            const botAvatarUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Joseph_Siffrein_Duplessis_-_Benjamin_ Franklin_-_Google_Art_Project.jpg/984px-Joseph_Siffrein_Duplessis_-_Benjamin_Franklin_-_Google_Art_Project.jpg';
+            // *** FIX: Removed the extra space in "Benjamin_ Franklin" ***
+            const botAvatarUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Joseph_Siffrein_Duplessis_-_Benjamin_Franklin_-_Google_Art_Project.jpg/984px-Joseph_Siffrein_Duplessis_-_Benjamin_Franklin_-_Google_Art_Project.jpg';
             const botAvatarFallback = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Benjamin_Franklin_by_Joseph_Siffred_Duplessis_-_National_Portrait_Gallery%2C_Washington.jpg/220px-Benjamin_Franklin_by_Joseph_Siffred_Duplessis_-_National_Portrait_Gallery%2C_Washington.jpg';
 
             // --- System Prompt & Persona Definition ---
@@ -513,4 +514,5 @@ You MUST base your answers *only* on the provided text from your autobiography a
 
 </body>
 </html>
+
 
