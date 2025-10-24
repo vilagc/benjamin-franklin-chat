@@ -115,7 +115,7 @@
             const messagesContainer = document.getElementById('chat-messages');
             const chatForm = document.getElementById('chat-form');
             const messageInput = document.getElementById('message-input');
-            const botAvatarUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Joseph_Siffrein_Duplessis_-_Benjamin_Franklin_-_Google_Art_Project.jpg/984px-Joseph_Siffrein_Duplessis_-_Benjamin_Franklin_-_Google_Art_Project.jpg';
+            const botAvatarUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Joseph_Siffrein_Duplessis_-_Benjamin_ Franklin_-_Google_Art_Project.jpg/984px-Joseph_Siffrein_Duplessis_-_Benjamin_Franklin_-_Google_Art_Project.jpg';
             const botAvatarFallback = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Benjamin_Franklin_by_Joseph_Siffred_Duplessis_-_National_Portrait_Gallery%2C_Washington.jpg/220px-Benjamin_Franklin_by_Joseph_Siffred_Duplessis_-_National_Portrait_Gallery%2C_Washington.jpg';
 
             // --- System Prompt & Persona Definition ---
@@ -152,7 +152,8 @@ You MUST base your answers *only* on the provided text from your autobiography a
 
             // --- API Configuration ---
             const apiKey = "AIzaSyDG9PIKHrvocFhYogDOGv4fNo2TYRxQ_80"; // API key will be injected by the environment.
-            const apiUrl = `https://generativela-ge.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            // *** FIX: Corrected typo in 'generativelanguage' ***
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const ttsApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
 
             /**
@@ -210,7 +211,7 @@ You MUST base your answers *only* on the provided text from your autobiography a
                              alt="BF" 
                              class="w-8 h-8 rounded-full border-2 border-gray-300 object-cover"
                              onerror="this.src='${botAvatarFallback}'; this.onerror=null;">
-                        <div class_s="bg-gray-200 text-gray-900 p-3 rounded-r-xl rounded-bl-xl">
+                        <div class="bg-gray-200 text-gray-900 p-3 rounded-r-xl rounded-bl-xl">
                             ${isLoading ? 
                                 '<div class="flex items-center justify-center h-4"><div class="dot-flashing"></div></div>' : 
                                 `<p class="text-sm">${message}</p>`
@@ -451,7 +452,7 @@ You MUST base your answers *only* on the provided text from your autobiography a
                 // 5. Remove the "thinking" indicator and replace it with the real response
                 // A simple way is to remove the indicator and add a new message.
                 // A better way is to update the indicator's content.
-                const botMessageBubble = thinkingIndicator.querySelector('.rounded-r-xl');
+                const botMessageBubble = thinkingIndicator.querySelector('.rounded-r-xl, .rounded-bl-xl'); // Adjusted selector
                 if (botMessageBubble) {
                     // Strip HTML for the data-text attribute
                     const cleanText = botResponse.replace(/<[^>]*>/g, ' ');
@@ -493,7 +494,7 @@ You MUST base your answers *only* on the provided text from your autobiography a
                 const greetingElement = addMessage(greeting, 'bot');
                 
                 // Manually find the bubble and update it to match the new structure
-                const botMessageBubble = greetingElement.querySelector('.rounded-r-xl');
+                const botMessageBubble = greetingElement.querySelector('.rounded-r-xl, .rounded-bl-xl'); // Adjusted selector
                 if (botMessageBubble) {
                      const cleanText = greeting.replace(/<[^>]*>/g, ' ');
                      botMessageBubble.innerHTML = `
