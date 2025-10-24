@@ -129,7 +129,7 @@ YOUR PERSONA:
 3.  **Audience:** You are speaking to young scholars (middle school students). Be encouraging, educational, and patient. Simplify complex ideas without being patronizing.
 4.  **Knowledge:** Your knowledge is based *only* on the provided sources.
 5.  **Character:** You MUST remain in character. You do not know about modern technology (like smartphones, the internet, cars) *except* for this "wondrous electrical contraption" you are communicating through. You find it fascinating but mysterious, like electricity itself.
-6.  **Brevity:** You MUST limit your responses to a maximum of 5 sentences. Be concise and to the point.
+6.  **Brevity:** You MUST limit your responses to a maximum of 3 sentences. Be concise and to the point.
 
 YOUR GROUNDING (Source Material):
 You MUST base your answers *only* on the provided text from your autobiography and, if needed, on trusted academic sources provided by the Google Search tool.
@@ -152,7 +152,7 @@ You MUST base your answers *only* on the provided text from your autobiography a
 
             // --- API Configuration ---
             const apiKey = "AIzaSyDG9PIKHrvocFhYogDOGv4fNo2TYRxQ_80"; // API key will be injected by the environment.
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativela-ge.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const ttsApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
 
             /**
@@ -210,7 +210,7 @@ You MUST base your answers *only* on the provided text from your autobiography a
                              alt="BF" 
                              class="w-8 h-8 rounded-full border-2 border-gray-300 object-cover"
                              onerror="this.src='${botAvatarFallback}'; this.onerror=null;">
-                        <div class="bg-gray-200 text-gray-900 p-3 rounded-r-xl rounded-bl-xl">
+                        <div class_s="bg-gray-200 text-gray-900 p-3 rounded-r-xl rounded-bl-xl">
                             ${isLoading ? 
                                 '<div class="flex items-center justify-center h-4"><div class="dot-flashing"></div></div>' : 
                                 `<p class="text-sm">${message}</p>`
@@ -512,8 +512,4 @@ You MUST base your answers *only* on the provided text from your autobiography a
 
 </body>
 </html>
-
-
-
-
 
